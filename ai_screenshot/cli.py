@@ -1,4 +1,4 @@
-"""CLI interface for AI Screenshot Tool — works on any platform for testing."""
+"""CLI interface for ScreenshotterAI — works on any platform for testing."""
 
 import argparse
 import sys
@@ -170,7 +170,7 @@ def cmd_analyze(args, config):
 def main():
     parser = argparse.ArgumentParser(
         prog="ai-screenshot",
-        description="AI Screenshot Tool — capture, analyze, and extract text from your screen",
+        description="ScreenshotterAI — capture, analyze, and extract text from your screen",
     )
     subparsers = parser.add_subparsers(dest="command")
 

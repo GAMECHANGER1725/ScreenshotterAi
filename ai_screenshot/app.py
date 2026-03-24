@@ -1,4 +1,4 @@
-"""Main menu bar application for AI Screenshot Tool (macOS)."""
+"""Main menu bar application for ScreenshotterAI (macOS)."""
 
 import sys
 import threading
@@ -21,7 +21,7 @@ class AIScreenshotApp(rumps.App):
 
     def __init__(self):
         super().__init__(
-            "AI Screenshot",
+            "ScreenshotterAI",
             title="📸",
             quit_button=None,
         )
@@ -75,7 +75,7 @@ class AIScreenshotApp(rumps.App):
     def _set_analysis_mode(self, mode: str) -> None:
         self._current_prompt = mode
         rumps.notification(
-            "AI Screenshot",
+            "ScreenshotterAI",
             "Analysis Mode Changed",
             f"Now using: {mode}",
         )
@@ -83,7 +83,7 @@ class AIScreenshotApp(rumps.App):
     def _process_screenshot(self, screenshot_path: Path, capture_type: str) -> None:
         """Process a captured screenshot — OCR + AI analysis."""
         self._last_screenshot = screenshot_path
-        rumps.notification("AI Screenshot", "Captured!", f"Saved to {screenshot_path.name}")
+        rumps.notification("ScreenshotterAI", "Captured!", f"Saved to {screenshot_path.name}")
 
         record = ScreenshotRecord(
             filepath=str(screenshot_path),
@@ -109,15 +109,15 @@ class AIScreenshotApp(rumps.App):
 
                     if self.config.get("auto_copy"):
                         copy_text(analysis)
-                        rumps.notification("AI Screenshot", "Analysis Complete", "Result copied to clipboard!")
+                        rumps.notification("ScreenshotterAI", "Analysis Complete", "Result copied to clipboard!")
                     else:
-                        rumps.notification("AI Screenshot", "Analysis Complete", analysis[:100])
+                        rumps.notification("ScreenshotterAI", "Analysis Complete", analysis[:100])
                 elif self.config.get("auto_copy") and ocr_text:
                     copy_text(ocr_text)
-                    rumps.notification("AI Screenshot", "OCR Complete", "Text copied to clipboard!")
+                    rumps.notification("ScreenshotterAI", "OCR Complete", "Text copied to clipboard!")
 
             except Exception as e:
-                rumps.notification("AI Screenshot", "Error", str(e)[:100])
+                rumps.notification("ScreenshotterAI", "Error", str(e)[:100])
             finally:
                 self.history.add(record)
 
@@ -158,7 +158,7 @@ class AIScreenshotApp(rumps.App):
     def _on_view_history(self, sender=None) -> None:
         records = self.history.get_recent(10)
         if not records:
-            rumps.notification("AI Screenshot", "History", "No screenshots yet.")
+            rumps.notification("ScreenshotterAI", "History", "No screenshots yet.")
             return
 
         lines = []
@@ -178,7 +178,7 @@ class AIScreenshotApp(rumps.App):
 
     def _on_settings(self, sender=None) -> None:
         response = rumps.Window(
-            title="AI Screenshot Settings",
+            title="ScreenshotterAI Settings",
             message="Enter your Anthropic API key:",
             default_text=self.config.get("api_key", ""),
             ok="Save",
@@ -187,7 +187,7 @@ class AIScreenshotApp(rumps.App):
         if response.clicked:
             self.config["api_key"] = response.text
             save_config(self.config)
-            rumps.notification("AI Screenshot", "Settings", "API key saved!")
+            rumps.notification("ScreenshotterAI", "Settings", "API key saved!")
 
     def _on_quit(self, sender=None) -> None:
         self._hotkey_listener.stop()
@@ -197,7 +197,7 @@ class AIScreenshotApp(rumps.App):
 def main():
     """Entry point for the menu bar app."""
     if sys.platform != "darwin":
-        print("AI Screenshot Tool requires macOS.")
+        print("ScreenshotterAI requires macOS.")
         print("For testing on other platforms, use the CLI: python -m ai_screenshot.cli")
         sys.exit(1)
 

@@ -1,4 +1,4 @@
-# AI Screenshot Tool
+# ScreenshotterAI
 
 An AI-powered screenshot tool for macOS — capture your screen, extract text with OCR, and analyze content with Claude's vision API. Inspired by [Wispr Flow](https://wispr.com).
 
@@ -29,8 +29,8 @@ An AI-powered screenshot tool for macOS — capture your screen, extract text wi
 brew install tesseract
 
 # Clone and install
-git clone https://github.com/gamechanger1725/wheelofnames.git
-cd wheelofnames
+git clone https://github.com/gamechanger1725/ScreenshotterAI.git
+cd ScreenshotterAI
 pip install -e ".[dev]"
 
 # Set your API key

@@ -1,4 +1,4 @@
-"""Kaggle dataset downloader for testing the AI Screenshot Tool.
+"""Kaggle dataset downloader for testing ScreenshotterAI.
 
 Downloads sample screenshot/OCR datasets for local testing and benchmarking.
 Requires Kaggle API credentials (set KAGGLE_USERNAME and KAGGLE_KEY env vars,

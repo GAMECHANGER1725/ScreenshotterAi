@@ -3,13 +3,13 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
-name = "ai-screenshot"
+name = "screenshotter-ai"
 version = "0.1.0"
-description = "AI-powered screenshot tool for macOS — capture, analyze, and extract text from your screen"
+description = "ScreenshotterAI — AI-powered screenshot tool for macOS. Capture, analyze, and extract text from your screen."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-authors = [{name = "AI Screenshot Tool"}]
+authors = [{name = "ScreenshotterAI"}]
 
 dependencies = [
     "rumps>=0.4.0",

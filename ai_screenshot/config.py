@@ -1,4 +1,4 @@
-"""Configuration management for AI Screenshot Tool."""
+"""Configuration management for ScreenshotterAI."""
 
 import os
 import json
