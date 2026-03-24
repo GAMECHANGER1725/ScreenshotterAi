@@ -16,7 +16,13 @@ DEFAULT_CONFIG = {
     },
     "auto_copy": True,
     "auto_analyze": True,
+    "auto_paste": False,
+    "smart_mode": True,
+    "streaming": True,
+    "show_overlay": True,
     "ocr_language": "eng",
+    "watch_interval": 2.0,
+    "watch_threshold": 0.05,
 }
 
 CONFIG_DIR = Path.home() / ".ai_screenshot"
