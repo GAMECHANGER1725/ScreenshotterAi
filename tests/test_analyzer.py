@@ -29,3 +29,6 @@ def test_analysis_prompts_exist():
     assert "extract_text" in ANALYSIS_PROMPTS
     assert "code" in ANALYSIS_PROMPTS
     assert "summarize" in ANALYSIS_PROMPTS
+    assert "debug" in ANALYSIS_PROMPTS
+    assert "accessibility" in ANALYSIS_PROMPTS
+    assert "data" in ANALYSIS_PROMPTS

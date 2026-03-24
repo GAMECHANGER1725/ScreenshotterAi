@@ -7,7 +7,7 @@ from pathlib import Path
 
 DEFAULT_CONFIG = {
     "screenshot_dir": os.path.expanduser("~/ai_screenshots"),
-    "ai_model": "claude-sonnet-4-20250514",
+    "ai_model": "gemini-2.0-flash",
     "max_history": 100,
     "hotkeys": {
         "region": "<cmd>+<shift>+s",
@@ -37,7 +37,7 @@ def load_config() -> dict:
             user_config = json.load(f)
         config.update(user_config)
     # Env overrides
-    if api_key := os.environ.get("ANTHROPIC_API_KEY"):
+    if api_key := os.environ.get("GEMINI_API_KEY"):
         config["api_key"] = api_key
     if model := os.environ.get("AI_MODEL"):
         config["ai_model"] = model

@@ -219,7 +219,7 @@ def batch_test(data_dir: str, max_images: int = 5, save_report: bool = False) ->
                     ai_result = analyze_screenshot(
                         img_path,
                         prompt="Briefly describe this image in one sentence.",
-                        model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                        model=config.get("ai_model", "gemini-2.0-flash"),
                         api_key=config.get("api_key"),
                     )
                     ai_time = time.time() - t0

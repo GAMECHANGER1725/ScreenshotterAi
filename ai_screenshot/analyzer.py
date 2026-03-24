@@ -1,4 +1,4 @@
-"""AI vision analysis using Anthropic's Claude API.
+"""AI vision analysis using Google's Gemini API.
 
 Supports both standard and streaming analysis modes.
 """
@@ -7,11 +7,33 @@ import base64
 from pathlib import Path
 from typing import Generator
 
-import anthropic
+from PIL import Image
+
+
+def _get_genai():
+    """Lazy import of google.generativeai to avoid import errors in test environments."""
+    import google.generativeai as genai
+    return genai
+
+
+def _configure_client(api_key: str | None = None) -> None:
+    """Configure the Gemini client with the API key."""
+    import os
+    genai = _get_genai()
+    key = api_key or os.environ.get("GEMINI_API_KEY", "")
+    genai.configure(api_key=key)
+
+
+def _load_image(image_path: Path) -> Image.Image:
+    """Load an image for Gemini's vision API."""
+    return Image.open(image_path)
 
 
 def _encode_image(image_path: Path) -> tuple[str, str]:
-    """Read and base64-encode an image file. Returns (base64_data, media_type)."""
+    """Read and base64-encode an image file. Returns (base64_data, media_type).
+
+    Kept for compatibility with tests and annotation modules.
+    """
     suffix = image_path.suffix.lower()
     media_types = {
         ".png": "image/png",
@@ -25,92 +47,64 @@ def _encode_image(image_path: Path) -> tuple[str, str]:
     return data, media_type
 
 
-def _build_messages(image_path: Path, prompt: str) -> list[dict]:
-    """Build the messages payload for the Claude API."""
-    image_data, media_type = _encode_image(image_path)
-    return [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": media_type,
-                        "data": image_data,
-                    },
-                },
-                {
-                    "type": "text",
-                    "text": prompt,
-                },
-            ],
-        }
-    ]
-
-
 def analyze_screenshot(
     image_path: Path,
     prompt: str = "Describe what you see in this screenshot. Extract any visible text.",
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "gemini-2.0-flash",
     api_key: str | None = None,
 ) -> str:
-    """Send a screenshot to Claude's vision API for analysis.
+    """Send a screenshot to Gemini's vision API for analysis.
 
     Args:
         image_path: Path to the screenshot image.
         prompt: What to ask about the image.
-        model: Claude model to use.
-        api_key: Anthropic API key (uses env var if None).
+        model: Gemini model to use.
+        api_key: Gemini API key (uses env var if None).
 
     Returns:
         The AI's analysis text.
     """
-    client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+    _configure_client(api_key)
+    genai = _get_genai()
+    img = _load_image(image_path)
 
-    message = client.messages.create(
-        model=model,
-        max_tokens=4096,
-        messages=_build_messages(image_path, prompt),
-    )
-    return message.content[0].text
+    gemini_model = genai.GenerativeModel(model)
+    response = gemini_model.generate_content([prompt, img])
+    return response.text
 
 
 def analyze_screenshot_stream(
     image_path: Path,
     prompt: str = "Describe what you see in this screenshot. Extract any visible text.",
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "gemini-2.0-flash",
     api_key: str | None = None,
     on_chunk: callable = None,
 ) -> str:
-    """Stream analysis results from Claude — yields text chunks in real-time.
-
-    This provides the Wispr Flow-like experience of seeing results appear
-    as they're generated.
+    """Stream analysis results from Gemini — yields text chunks in real-time.
 
     Args:
         image_path: Path to the screenshot image.
         prompt: What to ask about the image.
-        model: Claude model to use.
-        api_key: Anthropic API key.
+        model: Gemini model to use.
+        api_key: Gemini API key.
         on_chunk: Optional callback(str) called for each text chunk.
 
     Returns:
         The complete analysis text.
     """
-    client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+    _configure_client(api_key)
+    genai = _get_genai()
+    img = _load_image(image_path)
+
+    gemini_model = genai.GenerativeModel(model)
+    response = gemini_model.generate_content([prompt, img], stream=True)
 
     full_text = []
-
-    with client.messages.stream(
-        model=model,
-        max_tokens=4096,
-        messages=_build_messages(image_path, prompt),
-    ) as stream:
-        for text in stream.text_stream:
-            full_text.append(text)
+    for chunk in response:
+        if chunk.text:
+            full_text.append(chunk.text)
             if on_chunk:
-                on_chunk(text)
+                on_chunk(chunk.text)
 
     return "".join(full_text)
 
@@ -118,7 +112,7 @@ def analyze_screenshot_stream(
 def analyze_screenshot_iter(
     image_path: Path,
     prompt: str = "Describe what you see in this screenshot. Extract any visible text.",
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "gemini-2.0-flash",
     api_key: str | None = None,
 ) -> Generator[str, None, None]:
     """Generator that yields text chunks from streaming analysis.
@@ -127,21 +121,22 @@ def analyze_screenshot_iter(
         for chunk in analyze_screenshot_iter(path):
             print(chunk, end="", flush=True)
     """
-    client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+    _configure_client(api_key)
+    genai = _get_genai()
+    img = _load_image(image_path)
 
-    with client.messages.stream(
-        model=model,
-        max_tokens=4096,
-        messages=_build_messages(image_path, prompt),
-    ) as stream:
-        for text in stream.text_stream:
-            yield text
+    gemini_model = genai.GenerativeModel(model)
+    response = gemini_model.generate_content([prompt, img], stream=True)
+
+    for chunk in response:
+        if chunk.text:
+            yield chunk.text
 
 
 def ask_about_screenshot(
     image_path: Path,
     question: str,
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "gemini-2.0-flash",
     api_key: str | None = None,
 ) -> str:
     """Ask a specific question about a screenshot."""
@@ -156,7 +151,7 @@ def ask_about_screenshot(
 def multi_analyze(
     image_path: Path,
     modes: list[str] | None = None,
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "gemini-2.0-flash",
     api_key: str | None = None,
 ) -> dict[str, str]:
     """Run multiple analysis modes on a single screenshot.
@@ -164,7 +159,7 @@ def multi_analyze(
     Args:
         image_path: Path to the screenshot.
         modes: List of mode keys. If None, runs describe + extract_text.
-        model: Claude model to use.
+        model: Gemini model to use.
         api_key: API key.
 
     Returns:

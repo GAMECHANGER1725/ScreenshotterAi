@@ -206,7 +206,7 @@ class AIScreenshotApp(rumps.App):
                         analysis = analyze_screenshot_stream(
                             screenshot_path,
                             prompt=prompt,
-                            model=self.config.get("ai_model", "claude-sonnet-4-20250514"),
+                            model=self.config.get("ai_model", "gemini-2.0-flash"),
                             api_key=self.config.get("api_key"),
                             on_chunk=lambda chunk: overlay.append_text(chunk),
                         )
@@ -214,7 +214,7 @@ class AIScreenshotApp(rumps.App):
                         analysis = analyze_screenshot(
                             screenshot_path,
                             prompt=prompt,
-                            model=self.config.get("ai_model", "claude-sonnet-4-20250514"),
+                            model=self.config.get("ai_model", "gemini-2.0-flash"),
                             api_key=self.config.get("api_key"),
                         )
                         if overlay:
@@ -356,7 +356,7 @@ class AIScreenshotApp(rumps.App):
     def _on_settings(self, sender=None) -> None:
         response = rumps.Window(
             title="ScreenshotterAI Settings",
-            message="Enter your Anthropic API key:",
+            message="Enter your Gemini API key:",
             default_text=self.config.get("api_key", ""),
             ok="Save",
             cancel="Cancel",

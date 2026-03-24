@@ -105,7 +105,7 @@ def cmd_capture(args, config):
                     analyze_screenshot_stream(
                         path,
                         prompt=prompt,
-                        model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                        model=config.get("ai_model", "gemini-2.0-flash"),
                         api_key=config.get("api_key"),
                         on_chunk=on_chunk,
                     )
@@ -115,7 +115,7 @@ def cmd_capture(args, config):
                 result = analyze_screenshot(
                     path,
                     prompt=prompt,
-                    model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                    model=config.get("ai_model", "gemini-2.0-flash"),
                     api_key=config.get("api_key"),
                 )
                 console.print(Panel(result, title="AI Analysis"))
@@ -136,7 +136,7 @@ def cmd_capture(args, config):
             result = ask_about_screenshot(
                 path,
                 question=args.ask,
-                model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                model=config.get("ai_model", "gemini-2.0-flash"),
                 api_key=config.get("api_key"),
             )
             console.print(Panel(result, title="Answer"))
@@ -228,7 +228,7 @@ def cmd_analyze(args, config):
                 analyze_screenshot_stream(
                     path,
                     prompt=prompt,
-                    model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                    model=config.get("ai_model", "gemini-2.0-flash"),
                     api_key=config.get("api_key"),
                     on_chunk=on_chunk,
                 )
@@ -238,7 +238,7 @@ def cmd_analyze(args, config):
             result = analyze_screenshot(
                 path,
                 prompt=prompt,
-                model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                model=config.get("ai_model", "gemini-2.0-flash"),
                 api_key=config.get("api_key"),
             )
             console.print(Panel(result, title="AI Analysis"))
@@ -293,7 +293,7 @@ def cmd_watch(args, config):
                     mode, prompt = get_smart_prompt(path, ocr_text)
                     result = analyze_screenshot(
                         path, prompt=prompt,
-                        model=config.get("ai_model", "claude-sonnet-4-20250514"),
+                        model=config.get("ai_model", "gemini-2.0-flash"),
                         api_key=config.get("api_key"),
                     )
                     console.print(f"[magenta]AI ({mode}):[/magenta] {result[:200]}")
