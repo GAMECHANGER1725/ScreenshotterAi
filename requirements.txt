@@ -1,0 +1,8 @@
+rumps>=0.4.0
+Pillow>=10.0.0
+pytesseract>=0.3.10
+anthropic>=0.39.0
+pynput>=1.7.6
+pyperclip>=1.8.2
+kaggle>=1.6.0
+rich>=13.0.0

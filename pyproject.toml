@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "ai-screenshot"
+version = "0.1.0"
+description = "AI-powered screenshot tool for macOS — capture, analyze, and extract text from your screen"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "AI Screenshot Tool"}]
+
+dependencies = [
+    "rumps>=0.4.0",
+    "Pillow>=10.0.0",
+    "pytesseract>=0.3.10",
+    "anthropic>=0.39.0",
+    "pynput>=1.7.6",
+    "pyperclip>=1.8.2",
+    "kaggle>=1.6.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock>=3.0",
+]
+
+[project.scripts]
+ai-screenshot = "ai_screenshot.app:main"
+ai-screenshot-kaggle = "ai_screenshot.kaggle_data:main"
+
+[tool.setuptools.packages.find]
+include = ["ai_screenshot*"]
