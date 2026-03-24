@@ -21,10 +21,10 @@ def test_load_config_defaults():
 def test_load_config_env_override():
     """Environment variables should override config values."""
     with patch("ai_screenshot.config.CONFIG_FILE", Path("/tmp/nonexistent_config.json")):
-        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key-123", "AI_MODEL": "claude-haiku-4-5-20251001"}):
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key-123", "AI_MODEL": "gemini-2.0-flash"}):
             config = load_config()
     assert config["api_key"] == "test-key-123"
-    assert config["ai_model"] == "claude-haiku-4-5-20251001"
+    assert config["ai_model"] == "gemini-2.0-flash"
 
 
 def test_save_and_load_config(tmp_path):

@@ -1,11 +1,11 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "screenshotter-ai"
-version = "0.1.0"
-description = "ScreenshotterAI — AI-powered screenshot tool for macOS. Capture, analyze, and extract text from your screen."
+version = "0.2.0"
+description = "ScreenshotterAI — AI-powered screenshot tool for macOS. Capture, analyze, and extract text from your screen with streaming AI, smart detection, and a Wispr Flow-style overlay."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -15,7 +15,7 @@ dependencies = [
     "rumps>=0.4.0",
     "Pillow>=10.0.0",
     "pytesseract>=0.3.10",
-    "anthropic>=0.39.0",
+    "google-generativeai>=0.8.0",
     "pynput>=1.7.6",
     "pyperclip>=1.8.2",
     "kaggle>=1.6.0",
@@ -29,7 +29,8 @@ dev = [
 ]
 
 [project.scripts]
-ai-screenshot = "ai_screenshot.app:main"
+ai-screenshot = "ai_screenshot.cli:main"
+ai-screenshot-gui = "ai_screenshot.app:main"
 ai-screenshot-kaggle = "ai_screenshot.kaggle_data:main"
 
 [tool.setuptools.packages.find]

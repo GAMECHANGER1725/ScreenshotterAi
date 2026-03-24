@@ -1,17 +1,19 @@
 """Kaggle dataset downloader for testing ScreenshotterAI.
 
-Downloads sample screenshot/OCR datasets for local testing and benchmarking.
+Downloads sample screenshot/OCR datasets for local testing, benchmarking,
+and accuracy evaluation. Supports batch testing with scoring.
 Requires Kaggle API credentials (set KAGGLE_USERNAME and KAGGLE_KEY env vars,
 or place kaggle.json in ~/.kaggle/).
 """
 
 import os
 import sys
-import zipfile
+import json
+import time
 from pathlib import Path
 
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.table import Table
 
 console = Console()
@@ -47,6 +49,16 @@ DATASETS = {
         "slug": "preatcher/scene-text",
         "description": "Scene text — text found in natural images (signs, labels, etc.).",
         "category": "ocr",
+    },
+    "icons": {
+        "slug": "danhendrycks/icons-50",
+        "description": "Icons-50 — 50 categories of app icons for UI recognition.",
+        "category": "ui",
+    },
+    "charts": {
+        "slug": "sakhawat18/chart-images",
+        "description": "Chart images — bar/line/pie charts for data extraction testing.",
+        "category": "data",
     },
 }
 
@@ -126,20 +138,24 @@ def download_sample(output_dir: str = "kaggle_data") -> Path | None:
     return download_dataset("receipts", output_dir)
 
 
-def batch_test(data_dir: str, max_images: int = 5) -> None:
+def batch_test(data_dir: str, max_images: int = 5, save_report: bool = False) -> dict:
     """Run OCR and optionally AI analysis on a batch of images from a dataset.
 
     Useful for benchmarking and testing the tool against real data.
+
+    Returns:
+        A report dict with timing and results.
     """
     from ai_screenshot.config import load_config
     from ai_screenshot.ocr import extract_text
+    from ai_screenshot.smart import detect_content_type
 
     config = load_config()
     data_path = Path(data_dir)
 
     if not data_path.exists():
         console.print(f"[red]Directory not found: {data_dir}[/red]")
-        return
+        return {}
 
     image_files = []
     for ext in (".png", ".jpg", ".jpeg", ".bmp", ".tiff"):
@@ -147,35 +163,115 @@ def batch_test(data_dir: str, max_images: int = 5) -> None:
 
     if not image_files:
         console.print(f"[red]No images found in {data_dir}[/red]")
-        return
+        return {}
 
     image_files = image_files[:max_images]
     console.print(f"[bold]Testing {len(image_files)} images from {data_dir}[/bold]\n")
 
-    for img_path in image_files:
-        console.print(f"\n[cyan]{'─' * 60}[/cyan]")
-        console.print(f"[bold]Image:[/bold] {img_path.name}")
+    report = {
+        "total_images": len(image_files),
+        "results": [],
+        "ocr_success": 0,
+        "ai_success": 0,
+        "smart_detections": {},
+        "total_ocr_time": 0.0,
+        "total_ai_time": 0.0,
+    }
 
-        try:
-            text = extract_text(img_path, config.get("ocr_language", "eng"))
-            preview = text[:200] + "..." if len(text) > 200 else text
-            console.print(f"[green]OCR:[/green] {preview or '[dim]No text detected[/dim]'}")
-        except Exception as e:
-            console.print(f"[red]OCR error: {e}[/red]")
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Processing images...", total=len(image_files))
 
-        # AI analysis if API key available
-        if config.get("api_key"):
+        for img_path in image_files:
+            result = {"file": str(img_path.name), "ocr_text": "", "ai_analysis": "", "content_type": ""}
+
+            # OCR
             try:
-                from ai_screenshot.analyzer import analyze_screenshot
-                result = analyze_screenshot(
-                    img_path,
-                    prompt="Briefly describe this image in one sentence.",
-                    model=config.get("ai_model", "claude-sonnet-4-20250514"),
-                    api_key=config.get("api_key"),
-                )
-                console.print(f"[magenta]AI:[/magenta] {result}")
+                t0 = time.time()
+                text = extract_text(img_path, config.get("ocr_language", "eng"))
+                ocr_time = time.time() - t0
+                result["ocr_text"] = text[:200]
+                result["ocr_time"] = round(ocr_time, 2)
+                report["total_ocr_time"] += ocr_time
+                if text.strip():
+                    report["ocr_success"] += 1
             except Exception as e:
-                console.print(f"[yellow]AI analysis skipped: {e}[/yellow]")
+                result["ocr_error"] = str(e)
+
+            # Smart detection
+            try:
+                content_type = detect_content_type(img_path, text)
+                result["content_type"] = content_type
+                report["smart_detections"][content_type] = report["smart_detections"].get(content_type, 0) + 1
+            except Exception:
+                pass
+
+            # AI analysis if API key available
+            if config.get("api_key"):
+                try:
+                    from ai_screenshot.analyzer import analyze_screenshot
+                    t0 = time.time()
+                    ai_result = analyze_screenshot(
+                        img_path,
+                        prompt="Briefly describe this image in one sentence.",
+                        model=config.get("ai_model", "gemini-2.0-flash"),
+                        api_key=config.get("api_key"),
+                    )
+                    ai_time = time.time() - t0
+                    result["ai_analysis"] = ai_result[:200]
+                    result["ai_time"] = round(ai_time, 2)
+                    report["total_ai_time"] += ai_time
+                    report["ai_success"] += 1
+                except Exception as e:
+                    result["ai_error"] = str(e)
+
+            report["results"].append(result)
+            progress.advance(task)
+
+    # Print summary
+    console.print(f"\n[bold]{'─' * 60}[/bold]")
+    console.print("[bold]Benchmark Results[/bold]\n")
+
+    table = Table(title="Results")
+    table.add_column("File", style="cyan", max_width=30)
+    table.add_column("Type", style="green")
+    table.add_column("OCR", style="yellow", max_width=40)
+    table.add_column("AI", style="magenta", max_width=40)
+
+    for r in report["results"]:
+        ocr_preview = r.get("ocr_text", "")[:37]
+        if len(r.get("ocr_text", "")) > 37:
+            ocr_preview += "..."
+        ai_preview = r.get("ai_analysis", "")[:37]
+        if len(r.get("ai_analysis", "")) > 37:
+            ai_preview += "..."
+        table.add_row(r["file"], r.get("content_type", "?"), ocr_preview or "—", ai_preview or "—")
+
+    console.print(table)
+
+    # Stats
+    console.print(f"\n[bold]Stats:[/bold]")
+    console.print(f"  OCR success rate: {report['ocr_success']}/{report['total_images']}")
+    console.print(f"  AI success rate:  {report['ai_success']}/{report['total_images']}")
+    console.print(f"  Avg OCR time:     {report['total_ocr_time']/max(report['total_images'],1):.2f}s")
+    if report["ai_success"]:
+        console.print(f"  Avg AI time:      {report['total_ai_time']/max(report['ai_success'],1):.2f}s")
+    if report["smart_detections"]:
+        console.print(f"  Content types:    {report['smart_detections']}")
+
+    # Save report
+    if save_report:
+        report_path = Path(data_dir) / "benchmark_report.json"
+        with open(report_path, "w") as f:
+            json.dump(report, f, indent=2)
+        console.print(f"\n[green]Report saved to {report_path}[/green]")
+
+    return report
 
 
 def main():
@@ -200,6 +296,7 @@ def main():
     test = subparsers.add_parser("test", help="Run batch test on downloaded images")
     test.add_argument("dir", help="Directory containing images")
     test.add_argument("--max", "-n", type=int, default=5, help="Max images to test")
+    test.add_argument("--report", "-r", action="store_true", help="Save benchmark report to JSON")
 
     args = parser.parse_args()
 
@@ -208,7 +305,7 @@ def main():
     elif args.command == "download":
         download_dataset(args.name, args.output)
     elif args.command == "test":
-        batch_test(args.dir, args.max)
+        batch_test(args.dir, args.max, save_report=args.report)
     else:
         parser.print_help()
 
